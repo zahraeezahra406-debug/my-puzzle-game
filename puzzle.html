@@ -5,121 +5,147 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>پازل رنگی 🧩</title>
   <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       min-height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
       background: #17172b;
-      font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+      font-family: Tahoma, Arial, sans-serif;
       color: white;
-      padding: 20px;
+      padding: 16px;
     }
-
-    .game {
-      text-align: center;
-      max-width: 420px;
-      width: 100%;
-    }
-
-    h1 {
-      font-size: 1.8rem;
-      margin-bottom: 8px;
-      color: #e0e7ff;
-    }
-
-    .subtitle {
-      color: #a5b4fc;
-      margin-bottom: 24px;
-      font-size: 0.95rem;
-    }
-
+    .game { text-align: center; width: 100%; max-width: 380px; }
+    h1 { font-size: 1.7rem; margin-bottom: 6px; color: #e0e7ff; }
+    .subtitle { color: #a5b4fc; margin-bottom: 20px; font-size: 0.9rem; }
     .board {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 8px;
+      gap: 7px;
       background: #0f0f1a;
-      padding: 12px;
-      border-radius: 16px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-      margin-bottom: 24px;
+      padding: 10px;
+      border-radius: 14px;
+      margin-bottom: 20px;
     }
-
     .tile {
       aspect-ratio: 1;
-      border-radius: 12px;
+      border-radius: 10px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.4rem;
+      font-size: 1.3rem;
       font-weight: bold;
       color: white;
       cursor: pointer;
-      transition: transform 0.15s, box-shadow 0.15s;
       user-select: none;
-      text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+      text-shadow: 0 1px 2px rgba(0,0,0,0.4);
     }
-
-    .tile:active {
-      transform: scale(0.95);
-    }
-
-    .tile.empty {
-      background: transparent !important;
-      cursor: default;
-      box-shadow: none;
-    }
-
-    .controls {
-      display: flex;
-      gap: 12px;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-
+    .tile.empty { background: transparent !important; cursor: default; }
     button {
       background: #6366f1;
       color: white;
       border: none;
-      padding: 12px 28px;
-      border-radius: 12px;
+      padding: 12px 26px;
+      border-radius: 11px;
       font-size: 1rem;
       cursor: pointer;
-      transition: background 0.2s, transform 0.15s;
       font-family: inherit;
     }
-
-    button:hover {
-      background: #4f46e5;
-    }
-
-    button:active {
-      transform: scale(0.97);
-    }
-
-    .moves {
-      margin-top: 18px;
-      color: #c7d2fe;
-      font-size: 1.05rem;
-    }
-
-    .win-message {
-      margin-top: 20px;
-      padding: 16px;
-      background: linear-gradient(135deg, #10b981, #059669);
-      border-radius: 14px;
-      font-size: 1.3rem;
+    .moves { margin-top: 16px; color: #c7d2fe; }
+    .win {
+      margin-top: 16px;
+      padding: 14px;
+      background: #059669;
+      border-radius: 12px;
+      font-size: 1.2rem;
       font-weight: bold;
       display: none;
-      animation: pop 0.4s ease;
+    }
+    .c1{background:#ef4444}.c2{background:#f97316}.c3{background:#eab308}.c4{background:#22c55e}
+    .c5{background:#14b8a6}.c6{background:#06b6d4}.c7{background:#3b82f6}.c8{background:#6366f1}
+    .c9{background:#8b5cf6}.c10{background:#a855f7}.c11{background:#d946ef}.c12{background:#ec4899}
+    .c13{background:#f43f5e}.c14{background:#fb7185}.c15{background:#fda4af}
+  </style>
+</head>
+<body>
+  <div class="game">
+    <h1>پازل رنگی 🧩</h1>
+    <p class="subtitle">کاشی‌ها را جابه‌جا کن تا مرتب شوند</p>
+    <div class="board" id="board"></div>
+    <button onclick="shuffleBoard()">شروع مجدد</button>
+    <div class="moves">تعداد حرکت: <span id="moves">0</span></div>
+    <div class="win" id="win">آفرین! پازل رو حل کردی 🎉</div>
+  </div>
+
+  <script>
+    const SIZE = 4;
+    let tiles = [], emptyIndex = 15, moves = 0, isWon = false;
+    const boardEl = document.getElementById('board');
+    const movesEl = document.getElementById('moves');
+    const winEl = document.getElementById('win');
+    const colors = ['c1','c2','c3','c4','c5','c6','c7','c8','c9','c10','c11','c12','c13','c14','c15'];
+
+    function render() {
+      boardEl.innerHTML = '';
+      tiles.forEach((val, i) => {
+        const t = document.createElement('div');
+        t.className = 'tile';
+        if (val === 0) {
+          t.classList.add('empty');
+        } else {
+          t.classList.add(colors[val-1]);
+          t.textContent = val;
+          t.onclick = () => moveTile(i);
+        }
+        boardEl.appendChild(t);
+      });
     }
 
-    @keyframes pop {
-      0% { transform: scale(0.7); opacity: 0; }
-      100% { transform:
+    function moveTile(i) {
+      if (isWon) return;
+      const r = Math.floor(i/SIZE), c = i%SIZE;
+      const er = Math.floor(emptyIndex/SIZE), ec = emptyIndex%SIZE;
+      if ((Math.abs(r-er)===1 && c===ec) || (Math.abs(c-ec)===1 && r===er)) {
+        [tiles[i], tiles[emptyIndex]] = [tiles[emptyIndex], tiles[i]];
+        emptyIndex = i;
+        moves++;
+        movesEl.textContent = moves;
+        render();
+        checkWin();
+      }
+    }
+
+    function checkWin() {
+      for (let i=0; i<15; i++) if (tiles[i] !== i+1) return;
+      isWon = true;
+      winEl.style.display = 'block';
+    }
+
+    function shuffleBoard() {
+      tiles = [...Array(15).keys()].map(x=>x+1).concat([0]);
+      emptyIndex = 15;
+      moves = 0;
+      isWon = false;
+      winEl.style.display = 'none';
+      movesEl.textContent = '0';
+
+      for (let k=0; k<100; k++) {
+        const er = Math.floor(emptyIndex/SIZE), ec = emptyIndex%SIZE;
+        const dirs = [[-1,0],[1,0],[0,-1],[0,1]];
+        const possible = [];
+        dirs.forEach(([dr,dc]) => {
+          const nr = er+dr, nc = ec+dc;
+          if (nr>=0 && nr<SIZE && nc>=0 && nc<SIZE) possible.push(nr*SIZE+nc);
+        });
+        const rand = possible[Math.floor(Math.random()*possible.length)];
+        [tiles[rand], tiles[emptyIndex]] = [tiles[emptyIndex], tiles[rand]];
+        emptyIndex = rand;
+      }
+      render();
+    }
+
+    shuffleBoard();
+  </script>
+</body>
+  </html>
