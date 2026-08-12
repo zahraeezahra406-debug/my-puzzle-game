@@ -18,7 +18,7 @@
     }
     .game { text-align: center; width: 100%; max-width: 380px; }
     h1 { font-size: 1.7rem; margin-bottom: 6px; color: #e0e7ff; }
-    .subtitle { color: #a5b4fc; margin-bottom: 20px; font-size: 0.9rem; }
+    .subtitle { color: #a5b4fc; margin-bottom: 16px; font-size: 0.9rem; }
     .board {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -26,7 +26,7 @@
       background: #0f0f1a;
       padding: 10px;
       border-radius: 14px;
-      margin-bottom: 20px;
+      margin-bottom: 18px;
     }
     .tile {
       aspect-ratio: 1;
@@ -44,19 +44,23 @@
     }
     .tile:active { transform: scale(0.92); }
     .tile.empty { background: transparent !important; cursor: default; }
-    button {
+    .btn {
       background: #6366f1;
       color: white;
       border: none;
-      padding: 12px 26px;
+      padding: 11px 22px;
       border-radius: 11px;
-      font-size: 1rem;
+      font-size: 0.95rem;
       cursor: pointer;
       font-family: inherit;
+      margin: 4px;
     }
-    .moves { margin-top: 16px; color: #c7d2fe; }
+    .btn-sound {
+      background: #0d9488;
+    }
+    .moves { margin-top: 14px; color: #c7d2fe; }
     .win {
-      margin-top: 16px;
+      margin-top: 14px;
       padding: 14px;
       background: #059669;
       border-radius: 12px;
@@ -75,7 +79,10 @@
     <h1>پازل رنگی 🧩</h1>
     <p class="subtitle">کاشی‌ها را جابه‌جا کن تا مرتب شوند</p>
     <div class="board" id="board"></div>
-    <button onclick="shuffleBoard()">شروع مجدد</button>
+
+    <button class="btn btn-sound" id="soundBtn" onclick="enableSound()">فعال کردن صدا 🔊</button>
+    <button class="btn" onclick="shuffleBoard()">شروع مجدد</button>
+
     <div class="moves">تعداد حرکت: <span id="moves">0</span></div>
     <div class="win" id="win">آفرین! پازل رو حل کردی 🎉</div>
   </div>
@@ -83,54 +90,52 @@
   <script>
     const SIZE = 4;
     let tiles = [], emptyIndex = 15, moves = 0, isWon = false;
+    let soundEnabled = false;
+    let audioCtx = null;
+
     const boardEl = document.getElementById('board');
     const movesEl = document.getElementById('moves');
     const winEl = document.getElementById('win');
+    const soundBtn = document.getElementById('soundBtn');
     const colors = ['c1','c2','c3','c4','c5','c6','c7','c8','c9','c10','c11','c12','c13','c14','c15'];
 
-    // ===== سیستم صدا (بهبود یافته برای موبایل) =====
-    let audioCtx = null;
-
-    function initAudio() {
+    function enableSound() {
       if (!audioCtx) {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       }
-      if (audioCtx.state === 'suspended') {
-        audioCtx.resume();
-      }
+      audioCtx.resume().then(() => {
+        soundEnabled = true;
+        soundBtn.textContent = 'صدا فعال است ✅';
+        soundBtn.style.background = '#059669';
+        playBeep(600, 0.1);
+      }).catch(() => {
+        soundBtn.textContent = 'صدا پشتیبانی نمی‌شود';
+      });
     }
 
-    function playMoveSound() {
-      initAudio();
+    function playBeep(freq, duration) {
+      if (!soundEnabled || !audioCtx) return;
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
       osc.connect(gain);
       gain.connect(audioCtx.destination);
+      osc.frequency.value = freq;
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(600, audioCtx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(400, audioCtx.currentTime + 0.07);
       gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.09);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
       osc.start();
-      osc.stop(audioCtx.currentTime + 0.09);
+      osc.stop(audioCtx.currentTime + duration);
+    }
+
+    function playMoveSound() {
+      playBeep(520, 0.08);
     }
 
     function playWinSound() {
-      initAudio();
-      const notes = [523.25, 659.25, 783.99, 1046.50];
-      notes.forEach((freq, i) => {
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.type = 'triangle';
-        osc.frequency.value = freq;
-        const start = audioCtx.currentTime + i * 0.14;
-        gain.gain.setValueAtTime(0.25, start);
-        gain.gain.exponentialRampToValueAtTime(0.01, start + 0.35);
-        osc.start(start);
-        osc.stop(start + 0.35);
-      });
+      playBeep(523, 0.15);
+      setTimeout(() => playBeep(659, 0.15), 150);
+      setTimeout(() => playBeep(784, 0.15), 300);
+      setTimeout(() => playBeep(1046, 0.25), 450);
     }
 
     function render() {
@@ -172,7 +177,6 @@
     }
 
     function shuffleBoard() {
-      initAudio();
       tiles = [...Array(15).keys()].map(x => x + 1).concat([0]);
       emptyIndex = 15;
       moves = 0;
@@ -195,11 +199,7 @@
       render();
     }
 
-    // فعال‌سازی صدا با اولین لمس صفحه
-    document.body.addEventListener('touchstart', initAudio, { once: true });
-    document.body.addEventListener('click', initAudio, { once: true });
-
     shuffleBoard();
   </script>
 </body>
-</html>
+  </html>
