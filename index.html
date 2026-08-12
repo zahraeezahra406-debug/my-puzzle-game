@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>پازل عددی</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: Tahoma, Arial, sans-serif;
+    }
+
+    body {
+      background: linear-gradient(135deg, #1a1a2e, #16213e);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      padding: 20px;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+      font-size: 28px;
+      text-shadow: 0 0 10px #00d4ff;
+    }
+
+    .info {
+      margin-bottom: 15px;
+      font-size: 18px;
+    }
+
+    #board {
+      display: grid;
+      grid-template-columns: repeat(3, 90px);
+      grid-template-rows: repeat(3, 90px);
+      gap: 6px;
+      background: #0f3460;
+      padding: 8px;
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+    }
+
+    .tile {
+      width: 90px;
+      height: 90px;
+      background: #e94560;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.2s;
+      user-select: none;
+      box-shadow: 0 4px 0 #c23a51;
+    }
+
+    .tile:hover {
+      transform: scale(1.05);
+      background: #ff6b81;
+    }
+
+    .tile.empty {
+      background: transparent;
+      box-shadow: none;
+      cursor: default;
+    }
+
+    .tile.empty:hover {
+      transform: none;
+    }
+
+    button {
+      margin-top: 25px;
+      padding: 12px 30px;
+      font-size: 16px;
+      background: #00d4ff;
+      color: #1a1a2e;
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: 0.2s;
+    }
+
+    button:hover {
+      background: #00b4d8;
+      transform: scale(1.05);
+    }
+
+    .win-message {
+      margin-top: 20px;
+      font-size: 22px;
+      color: #00ff9d;
+      display: none;
+      animation: pulse 1s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🧩 پازل عددی</h1>
+  <div class="info">تعداد حرکت: <span id="moves">0</span></div>
+
+  <div id="board"></div>
+
+  <div class="win-message" id="win">🎉 آفرین! پازل کامل شد!</div>
+
+  <button onclick="shuffle()">شروع مجدد / به‌هم زدن</button>
+
+  <script>
+    const size = 3;
+    let board = [];
+    let emptyPos = { row: 2, col: 2 };
+    let moves = 0;
+    let isWon = false;
+
+    function initBoard() {
+      board = [];
+      let num = 1;
+      for (let i = 0; i < size; i++) {
+        board[i] = [];
+        for (let j = 0; j < size; j++) {
+          if (i === size - 1 && j === size - 1) {
+            board[i][j] = 0;
+          } else {
+            board[i][j] = num++;
+          }
+        }
+      }
+      emptyPos = { row: size - 1, col: size - 1 };
+      moves = 0;
+      isWon = false;
+      document.getElementById('moves').textContent = moves;
+      document.getElementById('win').style.display = 'none';
+      render();
+    }
+
+    function render() {
+      const boardEl = document.getElementById('board');
+      boardEl.innerHTML = '';
+
+      for (let i = 0; i < size; i++) {
+        for (let j = 0; j < size; j++) {
+          const tile = document.createElement('div');
+          tile.className = 'tile';
+
+          if (board[i][j] === 0) {
+            tile.classList.add('empty');
+          } else {
+            tile.textContent = board[i][j];
+            tile.onclick = () => moveTile(i, j);
+          }
+
+          boardEl.appendChild(tile);
+        }
+      }
+    }
+
+    function moveTile(row, col) {
+      if (isWon) return;
+
+      const isAdjacent =
+        (Math.abs(row - emptyPos.row) === 1 && col === emptyPos.col) ||
+        (Math.abs(col - emptyPos.col) === 1 && row === emptyPos.row);
+
+      if (isAdjacent) {
+        // جابه‌جایی
+        board[emptyPos.row][emptyPos.col] = board[row][col];
+        board[row][col] = 0;
+        emptyPos = { row, col };
+        moves++;
+        document.getElementById('moves').textContent = moves;
+        render();
+        checkWin();
+      }
+    }
+
+    function
