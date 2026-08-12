@@ -40,7 +40,9 @@
       cursor: pointer;
       user-select: none;
       text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+      transition: transform 0.12s;
     }
+    .tile:active { transform: scale(0.92); }
     .tile.empty { background: transparent !important; cursor: default; }
     button {
       background: #6366f1;
@@ -86,6 +88,39 @@
     const winEl = document.getElementById('win');
     const colors = ['c1','c2','c3','c4','c5','c6','c7','c8','c9','c10','c11','c12','c13','c14','c15'];
 
+    // ===== سیستم صدا =====
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    function playMoveSound() {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(520, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(380, audioCtx.currentTime + 0.08);
+      gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.1);
+    }
+
+    function playWinSound() {
+      const notes = [523, 659, 784, 1046]; // Do - Mi - Sol - Do
+      notes.forEach((freq, i) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.2, audioCtx.currentTime + i * 0.15);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + i * 0.15 + 0.3);
+        osc.start(audioCtx.currentTime + i * 0.15);
+        osc.stop(audioCtx.currentTime + i * 0.15 + 0.3);
+      });
+    }
+
     function render() {
       boardEl.innerHTML = '';
       tiles.forEach((val, i) => {
@@ -104,48 +139,55 @@
 
     function moveTile(i) {
       if (isWon) return;
-      const r = Math.floor(i/SIZE), c = i%SIZE;
-      const er = Math.floor(emptyIndex/SIZE), ec = emptyIndex%SIZE;
-      if ((Math.abs(r-er)===1 && c===ec) || (Math.abs(c-ec)===1 && r===er)) {
+      const r = Math.floor(i / SIZE), c = i % SIZE;
+      const er = Math.floor(emptyIndex / SIZE), ec = emptyIndex % SIZE;
+      if ((Math.abs(r - er) === 1 && c === ec) || (Math.abs(c - ec) === 1 && r === er)) {
         [tiles[i], tiles[emptyIndex]] = [tiles[emptyIndex], tiles[i]];
         emptyIndex = i;
         moves++;
         movesEl.textContent = moves;
+        playMoveSound();
         render();
         checkWin();
       }
     }
 
     function checkWin() {
-      for (let i=0; i<15; i++) if (tiles[i] !== i+1) return;
+      for (let i = 0; i < 15; i++) if (tiles[i] !== i + 1) return;
       isWon = true;
       winEl.style.display = 'block';
+      playWinSound();
     }
 
     function shuffleBoard() {
-      tiles = [...Array(15).keys()].map(x=>x+1).concat([0]);
+      tiles = [...Array(15).keys()].map(x => x + 1).concat([0]);
       emptyIndex = 15;
       moves = 0;
       isWon = false;
       winEl.style.display = 'none';
       movesEl.textContent = '0';
 
-      for (let k=0; k<100; k++) {
-        const er = Math.floor(emptyIndex/SIZE), ec = emptyIndex%SIZE;
+      for (let k = 0; k < 100; k++) {
+        const er = Math.floor(emptyIndex / SIZE), ec = emptyIndex % SIZE;
         const dirs = [[-1,0],[1,0],[0,-1],[0,1]];
         const possible = [];
-        dirs.forEach(([dr,dc]) => {
-          const nr = er+dr, nc = ec+dc;
-          if (nr>=0 && nr<SIZE && nc>=0 && nc<SIZE) possible.push(nr*SIZE+nc);
+        dirs.forEach(([dr, dc]) => {
+          const nr = er + dr, nc = ec + dc;
+          if (nr >= 0 && nr < SIZE && nc >= 0 && nc < SIZE) possible.push(nr * SIZE + nc);
         });
-        const rand = possible[Math.floor(Math.random()*possible.length)];
+        const rand = possible[Math.floor(Math.random() * possible.length)];
         [tiles[rand], tiles[emptyIndex]] = [tiles[emptyIndex], tiles[rand]];
         emptyIndex = rand;
       }
       render();
     }
 
+    // برای فعال شدن صدا در موبایل (با اولین لمس)
+    document.body.addEventListener('click', () => {
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+    }, { once: true });
+
     shuffleBoard();
   </script>
 </body>
-  </html>
+</html>
