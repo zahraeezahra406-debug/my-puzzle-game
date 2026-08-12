@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>پازل رنگی 🧩</title>
+<style>
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #17172b;
+    font-family: Arial, sans-serif;
+    color: white;
+  }
+
+  .game {
+    text-align: center;
+  }
+
+  h1 {
+    margin-bottom: 8px;
+  }
+
+  #score {
+    font-size: 20px;
+    margin-bottom: 15px;
+  }
+
+  #board {
+    display: grid;
+    grid-template-columns: repeat(6, 55px);
+    gap: 7px;
+    background: #292943;
+    padding: 10px;
+    border-radius: 15px;
+  }
+
+  .cell {
+    width: 55px;
+    height: 55px;
+    border: 0;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: transform .12s;
+  }
+
+  .cell:hover {
+    transform: scale(1.08);
+  }
+
+  button.restart {
+    margin-top: 18px;
+    padding: 10px 25px;
+    border: 0;
+    border-radius: 10px;
+    background: #fff;
+    color: #17172b;
+    font-size: 16px;
+    cursor: pointer;
+  }
+
+  @media (max-width: 430px) {
+    #board {
+      grid-template-columns: repeat(6, 43px);
+      gap: 5px;
+      padding: 7px;
+    }
+
+    .cell {
+      width: 43px;
+      height: 43px;
+    }
+  }
+</style>
+</head>
+
+<body>
+
+<div class="game">
+  <h1>🧩 پازل رنگی</h1>
+  <div id="score">امتیاز: 0</div>
+  <div id="board"></div>
+  <button class="restart" onclick="newGame()">بازی دوباره</button>
+</div>
+
+<script>
+const rows = 8;
+const cols = 6;
+
+const colors = [
+  "#ff4d6d",
+  "#4dabf7",
+  "#51cf66",
+  "#ffd43b",
+  "#cc5de8"
+];
+
+let board = [];
+let score = 0;
+
+function newGame() {
+  score = 0;
+  board = [];
+
+  for (let r = 0; r < rows; r++) {
+    board[r] = [];
+
+    for (let c = 0; c < cols; c++) {
+      board[r][c] = Math.floor(Math.random() * colors.length);
+    }
+  }
+
+  draw();
+}
+
+function draw() {
+  const boardElement = document.getElementById("board");
+  boardElement.innerHTML = "";
+
+  document.getElementById("score").textContent =
+    "امتیاز: " + score;
+
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const cell = document.createElement("button");
+      cell.className = "cell";
+
+      if (board[r][c] !== null) {
+        cell.style.background = colors[board[r][c]];
+        cell.onclick = () => clickCell(r, c);
+      } else {
+        cell.style.visibility = "hidden";
+      }
+
+      boardElement.appendChild(cell);
+    }
+  }
+}
+
+function clickCell(r, c) {
+  if (board[r][c] === null) return;
+
+  const group = findGroup(r, c);
+
+  // حداقل 3 مهره برای حذف لازم است
+  if (group.length < 3) return;
+
+  group.forEach(([x, y]) => {
+    board[x][y] = null;
+  });
+
+  score += group.length * group.length;
+
+  fall();
+  draw();
+
+  if (isGameOver()) {
+    setTimeout(() => {
+      alert("🎉 بازی تمام شد!\nامتیاز شما: " + score);
+    }, 100);
+  }
+}
+
+function findGroup(startR, startC) {
+  const color = board[startR][startC];
+  const visited = new Set();
+  const group = [];
+  const queue = [[startR, startC]];
+
+  while (queue.length) {
+    const [r, c] = queue.shift();
+    const key = r + "," + c;
+
+    if (visited.has(key)) continue;
+    visited.add(key);
+
+    if (
+      r < 0 || r >= rows ||
+      c < 0 || c >= cols ||
+      board[r][c] !== color
+    ) continue;
+
+    group.push([r, c]);
+
+    queue.push([r + 1, c]);
+    queue.push([r - 1, c]);
+    queue.push([r, c + 1]);
+    queue.push([r, c - 1]);
+  }
+
+  return group;
+}
+
+function fall() {
+  // مهره‌ها به پایین سقوط می‌کنند
+  for (let c = 0; c < cols; c++) {
+    const values = [];
+
+    for (let r = rows - 1; r >= 0; r--) {
+      if (board[r][c] !== null) {
+        values.push(board[r][c]);
+      }
+    }
+
+    for (let r = rows - 1, i = 0; r >= 0; r--, i++) {
+      board[r][c] = values[i] ?? null;
+    }
+  }
+
+  // ستون‌های خالی به سمت راست می‌روند
+  let writeCol = cols - 1;
+
+  for (let c = cols - 1; c >= 0; c--) {
+    let empty = true;
+
+    for (let r = 0; r < rows; r++) {
+      if (board[r][c] !== null) {
+        empty = false;
+        break;
+      }
+    }
+
+    if (!empty) {
+      if (writeCol !== c) {
+        for (let r = 0; r < rows; r++) {
+          board[r][writeCol] = board[r][c];
+          board[r][c] = null;
+        }
+      }
+
+      writeCol--;
+    }
+  }
+}
+
+function isGameOver() {
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      if (board[r][c] !== null) {
+        const group = findGroup(r, c);
+
+        if (group.length >= 3) {
+          return false;
+        }
+      }
+    }
+  }
+
+  return true;
+}
+
+newGame();
+</script>
+
+</body>
+</html>
