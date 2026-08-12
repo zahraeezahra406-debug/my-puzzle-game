@@ -30,7 +30,7 @@
     }
     .tile {
       aspect-ratio: 1;
-      border-radius: 10px;
+      border-radius: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -40,10 +40,24 @@
       cursor: pointer;
       user-select: none;
       text-shadow: 0 1px 2px rgba(0,0,0,0.4);
-      transition: transform 0.12s;
+      transition: transform 0.2s cubic-bezier(0.25, 1, 0.5, 1), 
+                  opacity 0.2s ease,
+                  box-shadow 0.2s ease;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.25);
     }
-    .tile:active { transform: scale(0.92); }
-    .tile.empty { background: transparent !important; cursor: default; }
+    .tile:active {
+      transform: scale(0.9);
+    }
+    .tile.moving {
+      transform: scale(1.08);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+      z-index: 10;
+    }
+    .tile.empty {
+      background: transparent !important;
+      cursor: default;
+      box-shadow: none;
+    }
     .btn {
       background: #6366f1;
       color: white;
@@ -54,10 +68,10 @@
       cursor: pointer;
       font-family: inherit;
       margin: 4px;
+      transition: transform 0.15s, background 0.2s;
     }
-    .btn-sound {
-      background: #0d9488;
-    }
+    .btn:active { transform: scale(0.96); }
+    .btn-sound { background: #0d9488; }
     .moves { margin-top: 14px; color: #c7d2fe; }
     .win {
       margin-top: 14px;
@@ -67,6 +81,11 @@
       font-size: 1.2rem;
       font-weight: bold;
       display: none;
+      animation: popIn 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+    @keyframes popIn {
+      0% { transform: scale(0.6); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
     }
     .c1{background:#ef4444}.c2{background:#f97316}.c3{background:#eab308}.c4{background:#22c55e}
     .c5{background:#14b8a6}.c6{background:#06b6d4}.c7{background:#3b82f6}.c8{background:#6366f1}
@@ -158,7 +177,15 @@
       if (isWon) return;
       const r = Math.floor(i / SIZE), c = i % SIZE;
       const er = Math.floor(emptyIndex / SIZE), ec = emptyIndex % SIZE;
+
       if ((Math.abs(r - er) === 1 && c === ec) || (Math.abs(c - ec) === 1 && r === er)) {
+        // انیمیشن نرم
+        const tileEl = boardEl.children[i];
+        if (tileEl) {
+          tileEl.classList.add('moving');
+          setTimeout(() => tileEl.classList.remove('moving'), 200);
+        }
+
         [tiles[i], tiles[emptyIndex]] = [tiles[emptyIndex], tiles[i]];
         emptyIndex = i;
         moves++;
@@ -202,4 +229,4 @@
     shuffleBoard();
   </script>
 </body>
-  </html>
+</html>
