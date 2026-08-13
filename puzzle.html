@@ -228,5 +228,27 @@
 
     shuffleBoard();
   </script>
-</body>
+<script>
+let best = localStorage.getItem("bestMoves") || 9999;
+
+const box = document.createElement("div");
+box.style.cssText = "font-size:18px;margin:10px;";
+box.innerHTML = "🏆 رکورد: " + (best == 9999 ? "هنوز ثبت نشده" : best + " حرکت");
+document.body.appendChild(box);
+
+setInterval(() => {
+  const text = document.body.innerText;
+  if (text.includes("آفرین!")) {
+    const m = text.match(/تعداد حرکت:\s*(\d+)/);
+    if (m) {
+      const moves = Number(m[1]);
+      if (moves < best) {
+        best = moves;
+        localStorage.setItem("bestMoves", best);
+        box.innerHTML = "🏆 رکورد جدید: " + best + " حرکت 🎉";
+      }
+    }
+  }
+}, 500);
+</script></body>
 </html>
