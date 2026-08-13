@@ -212,7 +212,7 @@
       movesEl.textContent = '0';
 
       for (let k = 0; k < 100; k++) {
-        const er = Math.floor(emptyIndex / SIZE), ec = emptyIndex % SIZE;
+       const ec = emptyIndex % SIZE; const er = Math.floor(emptyIndex / SIZE), ec = emptyIndex % SIZE;
         const dirs = [[-1,0],[1,0],[0,-1],[0,1]];
         const possible = [];
         dirs.forEach(([dr, dc]) => {
