@@ -212,8 +212,8 @@
       movesEl.textContent = '0';
 
       for (let k = 0; k < 100; k++) {
-       const ec = emptyIndex % SIZE; const er = Math.floor(emptyIndex / SIZE), ec = emptyIndex % SIZE;
-        const dirs = [[-1,0],[1,0],[0,-1],[0,1]];
+       const ec = emptyIndex % SIZE;
+const er = Math.floor(emptyIndex / SIZE);
         const possible = [];
         dirs.forEach(([dr, dc]) => {
           const nr = er + dr, nc = ec + dc;
